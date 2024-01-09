@@ -1,0 +1,19 @@
+{
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "region": "ap-south-1",
+      "source_ami": "actual-base-ami",
+      "instance_type": "t3.medium",
+      "ssh_username": "ec2-user",
+      "ami_name": "nginx-{{timestamp}}"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "ansible",
+      "playbook_file": "nginx.yaml"
+    }
+  ]
+}
+

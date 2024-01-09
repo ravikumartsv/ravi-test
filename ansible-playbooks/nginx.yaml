@@ -1,0 +1,29 @@
+---
+- name: Web Server Setup
+  hosts: localhost
+  gather_facts: true
+  become: yes
+
+  tasks:
+    - name: Install necessary dependencies
+      package:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - nginx  
+        - python3-pip
+
+    - name: Install required Python packages
+      pip:
+        name: "{{ item }}"
+      loop:
+        - boto3
+        - requests
+
+    - name: Download code from S3
+      aws_s3:
+        bucket: mycode
+        object: html.tar.gz
+        dest: /var/www/html/
+      become: yes
+

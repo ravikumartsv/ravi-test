@@ -1,0 +1,63 @@
+---
+- name: Configure Web Server with Self-signed Certificate
+  hosts: your_server
+  become: yes
+  vars:
+    webserver: apache  
+    demo_site_path: /var/www/html
+    ssl_cert_path: /etc/ssl/private
+    ssl_cert_content: |
+      -----BEGIN CERTIFICATE-----
+      Your SSL Certificate Content Here
+      -----END CERTIFICATE-----
+    ssl_key_content: |
+      -----BEGIN PRIVATE KEY-----
+      Your SSL Private Key Content Here
+      -----END PRIVATE KEY-----
+
+  tasks:
+    - name: Update package cache
+      package:
+        name: "{{ webserver }}"
+        state: latest
+
+    - name: Install web server
+      package:
+        name: "{{ webserver }}"
+        state: present
+
+    - name: Ensure web server is running
+      service:
+        name: "{{ webserver }}"
+        state: started
+        enabled: yes
+
+    - name: Apply security best practices for web server
+      template:
+        src: "{{ webserver }}-config.j2"
+        dest: "/etc/{{ webserver }}/sites-available/default"
+      notify: Reload Web Server
+
+    - name: Create self-signed SSL certificate
+      openssl_certificate:
+        path: "{{ ssl_cert_path }}"
+        owner: root
+        group: root
+        mode: '0600'
+        privatekey_path: "{{ ssl_cert_path }}/webserver.key"
+        certificate_path: "{{ ssl_cert_path }}/webserver.crt"
+        content: "{{ ssl_cert_content }}"
+        state: present
+
+    - name: Secure demo site with SSL
+      template:
+        src: "{{ webserver }}-ssl-config.j2"
+        dest: "/etc/{{ webserver }}/sites-available/default-ssl"
+      notify: Reload Web Server
+
+  handlers:
+    - name: Reload Web Server
+      service:
+        name: "{{ webserver }}"
+        state: reloaded
+
